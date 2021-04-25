@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
 public class KafkaService<T> implements Closeable {
@@ -31,16 +32,23 @@ public class KafkaService<T> implements Closeable {
         this.consumer = new KafkaConsumer<>(getProperties(groupId, properties));
     }
 
-    void run() {
-        while(true) {
-            var records = consumer.poll(Duration.ofMillis(100));
-            if (!records.isEmpty()) {
-                System.out.println("Record was found");
-                for (var record : records) {
-                    try {
-                        parse.consume(record);
-                    } catch (Exception e) {
-                        e.printStackTrace();
+    void run() throws ExecutionException, InterruptedException {
+        try(var deadLetter = new KafkaDispatcher<>()) {
+            while (true) {
+                var records = consumer.poll(Duration.ofMillis(100));
+                if (!records.isEmpty()) {
+                    System.out.println("Record was found");
+                    for (var record : records) {
+                        try {
+                            parse.consume(record);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            var message = record.value();
+                            deadLetter.send("ECOMMERCE_DEADLETTER"
+                                    , message.getId().toString()
+                                    , message.getId().continueWith("DeadLetter"),
+                                    new GsonSerializer().serialize("", message));
+                        }
                     }
                 }
             }

@@ -5,6 +5,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import java.sql.*;
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 public class CreateUserService {
 
@@ -24,7 +25,7 @@ public class CreateUserService {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
         var createUser = new CreateUserService();
         try (var service = new KafkaService<>(
                 CreateUserService.class.getSimpleName(),

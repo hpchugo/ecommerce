@@ -30,7 +30,7 @@ public class BatchSendMessageService {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
         var batchSendMessageService = new BatchSendMessageService();
         try (var service = new KafkaService<>(
                 BatchSendMessageService.class.getSimpleName(),
@@ -46,7 +46,8 @@ public class BatchSendMessageService {
         System.out.println("Processing new batch");
         var message = record.value();
         for(User user : Objects.requireNonNull(getAllUser())){
-            userDispatcher.send(message.getPayload(), user.getUuid(), message.getId().continueWith(BatchSendMessageService.class.getSimpleName()), user);
+            userDispatcher.sendAsync(message.getPayload(), user.getUuid(), message.getId().continueWith(BatchSendMessageService.class.getSimpleName()), user);
+            System.out.printf("Sent to user: %s", user);
         }
         System.out.println("------------------------------------------------------------------------");
     }

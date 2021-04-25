@@ -1,4 +1,4 @@
-package com.github.hpchugo.ecommerce;
+package com.github.hpchugo.ecommerce.consumer;
 
 import java.util.concurrent.Executors;
 

@@ -1,6 +1,4 @@
-package com.github.hpchugo.ecommerce;
-
-import com.github.hpchugo.ecommerce.consumer.KafkaService;
+package com.github.hpchugo.ecommerce.consumer;
 
 import java.util.HashMap;
 import java.util.concurrent.Callable;

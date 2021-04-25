@@ -1,40 +1,42 @@
 package com.github.hpchugo.ecommerce;
 
-import com.github.hpchugo.ecommerce.consumer.KafkaService;
+import com.github.hpchugo.ecommerce.consumer.ConsumerService;
+import com.github.hpchugo.ecommerce.consumer.ServiceRunner;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 
-public class ReadingReportService {
-
-
-    public static void main(String[] args) throws ExecutionException, InterruptedException {
-        var readingReportService = new ReadingReportService();
-        try(var service = new KafkaService<>(ReadingReportService.class.getSimpleName(),
-                "ECOMMERCE_USER_GENERATE_READING_REPORT",
-                readingReportService::parse,
-                new HashMap<>())){
-            service.run();
-        }
+public class ReadingReportService implements ConsumerService<User> {
+    public static void main(String[] args) {
+        new ServiceRunner(ReadingReportService::new).start(5);
     }
 
-    private void parse(ConsumerRecord<String, Message<User>> record) throws IOException, URISyntaxException {
+    public String getTopic() {
+        return "ECOMMERCE_USER_GENERATE_READING_REPORT";
+    }
+
+    public String getConsumerGroup() {
+        return ReadingReportService.class.getSimpleName();
+    }
+
+    public void parse(ConsumerRecord<String, Message<User>> record){
         System.out.println("------------------------------------------------------------------------");
         System.out.printf("Processing report for %s\n", record.value());
         var message = record.value();
         var user = message.getPayload();
         var target = new File(user.getReportPath());
-        Path filePath = Path.of(Objects.requireNonNull(getClass().getResource("/report.txt")).toURI());
-        IO.copyTo(filePath, target);
-        IO.append(target, String.format("Created for %s", user.getUuid()));
+        try {
+            Path filePath = Path.of(Objects.requireNonNull(getClass().getResource("/report.txt")).toURI());
+            IO.copyTo(filePath, target);
+            IO.append(target, String.format("Created for %s", user.getUuid()));
+        } catch (IOException | URISyntaxException e) {
+            e.printStackTrace();
+        }
         System.out.printf("File created: %s%n", target.getAbsolutePath());
         System.out.println("------------------------------------------------------------------------");
     }
-
 }

@@ -1,8 +1,10 @@
 package com.github.hpchugo.ecommerce;
 
+import com.github.hpchugo.ecommerce.consumer.ConsumerService;
+import com.github.hpchugo.ecommerce.consumer.ServiceRunner;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
-public class EmailService implements ConsumerService<String> {
+public class EmailService implements ConsumerService<Email> {
 
     public static void main(String[] args) {
         new ServiceRunner(EmailService::new).start(5);

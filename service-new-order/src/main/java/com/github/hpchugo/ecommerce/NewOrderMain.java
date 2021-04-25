@@ -11,21 +11,13 @@ public class NewOrderMain {
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
         String email = generateRandomEmail(20);
-
         for (int i = 0; i < 10; i++) {
             try (var orderDispatcher = new KafkaDispatcher<Order>()) {
-                try (var emailDispatcher = new KafkaDispatcher<Email>()) {
-                    String orderID = UUID.randomUUID().toString();
-                    BigDecimal amount = new BigDecimal(Math.random() * 5000 + 1);
-
-                    var id = new CorrelationId(NewOrderMain.class.getSimpleName());
-                    Order order = new Order(orderID, amount, email);
-
-                    orderDispatcher.send("ECOMMERCE_NEW_ORDER", email, id, order);
-
-                    Email emailCode = new Email("New Order!", "Thank you for your purchase! We're processing your Order");
-                    emailDispatcher.send("ECOMMERCE_SEND_EMAIL", email, id, emailCode);
-                }
+                String orderID = UUID.randomUUID().toString();
+                BigDecimal amount = new BigDecimal(Math.random() * 5000 + 1);
+                var id = new CorrelationId(NewOrderMain.class.getSimpleName());
+                Order order = new Order(orderID, amount, email);
+                orderDispatcher.send("ECOMMERCE_NEW_ORDER", email, id, order);
             }
         }
     }

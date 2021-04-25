@@ -17,6 +17,7 @@
         <module>service-new-order</module>
         <module>service-reading-report</module>
         <module>service-users</module>
+        <module>service-email-new-order</module>
     </modules>
     <name>E-Commerce</name>
 

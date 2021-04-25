@@ -7,4 +7,12 @@ public class Email {
         this.subject = subject;
         this.email = email;
     }
+
+    @Override
+    public String toString() {
+        return "Email{" +
+                "subject='" + subject + '\'' +
+                ", email='" + email + '\'' +
+                '}';
+    }
 }

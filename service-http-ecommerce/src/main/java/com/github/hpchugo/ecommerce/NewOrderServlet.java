@@ -16,8 +16,6 @@ import java.util.concurrent.ExecutionException;
 public class NewOrderServlet extends HttpServlet {
 
     private final KafkaDispatcher<Order> orderDispatcher = new KafkaDispatcher();
-    private final KafkaDispatcher<Email> emailDispatcher = new KafkaDispatcher();
-
 
     @Override
     public void init(ServletConfig config) throws ServletException {
@@ -27,7 +25,6 @@ public class NewOrderServlet extends HttpServlet {
     @Override
     public void destroy() {
         orderDispatcher.close();
-        emailDispatcher.close();
     }
 
     @Override
@@ -40,10 +37,6 @@ public class NewOrderServlet extends HttpServlet {
             Order order = new Order(orderID, amount, email);
             orderDispatcher.send("ECOMMERCE_NEW_ORDER", email, new CorrelationId(NewOrderServlet.class.getSimpleName()),order);
 
-            Email emailCode = new Email("New Order!", "Thank you for your purchase! We're processing your Order");
-
-            emailDispatcher.send("ECOMMERCE_SEND_EMAIL", email, new CorrelationId(NewOrderServlet.class.getSimpleName()),emailCode);
-            System.out.println("New Order sent successfully");
             resp.setStatus(HttpServletResponse.SC_OK);
             resp.getWriter().println("New Order sent successfully");
         } catch (ExecutionException e) {

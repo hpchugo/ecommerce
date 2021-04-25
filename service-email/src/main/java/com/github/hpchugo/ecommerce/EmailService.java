@@ -1,25 +1,22 @@
 package com.github.hpchugo.ecommerce;
 
-import com.github.hpchugo.ecommerce.consumer.KafkaService;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
-import java.util.HashMap;
-import java.util.concurrent.ExecutionException;
+public class EmailService implements ConsumerService<String> {
 
-public class EmailService {
-
-    public static void main(String[] args) throws ExecutionException, InterruptedException {
-        var emailService = new EmailService();
-        try(var service = new KafkaService<>(
-                EmailService.class.getSimpleName(),
-                "ECOMMERCE_SEND_EMAIL",
-                emailService::parse,
-                new HashMap<>())) {
-            service.run();
-        }
+    public static void main(String[] args) {
+        new ServiceRunner(EmailService::new).start(5);
     }
 
-    private void parse(ConsumerRecord<String, Message<Email>> record){
+    public String getTopic() {
+        return "ECOMMERCE_SEND_EMAIL";
+    }
+
+    public String getConsumerGroup() {
+        return EmailService.class.getSimpleName();
+    }
+
+    public void parse(ConsumerRecord<String, Message<Email>> record) {
         System.out.println("------------------------------------------------------------------------");
         System.out.println("Sending e-mail, checking for fraud");
         System.out.println(record.key());

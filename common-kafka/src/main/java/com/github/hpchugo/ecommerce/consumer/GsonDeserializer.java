@@ -1,5 +1,7 @@
-package com.github.hpchugo.ecommerce;
+package com.github.hpchugo.ecommerce.consumer;
 
+import com.github.hpchugo.ecommerce.Message;
+import com.github.hpchugo.ecommerce.MessageAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.kafka.common.serialization.Deserializer;

@@ -1,5 +1,7 @@
 package com.github.hpchugo.ecommerce;
 
+import com.github.hpchugo.ecommerce.dispatcher.KafkaDispatcher;
+
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;

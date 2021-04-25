@@ -1,5 +1,6 @@
 package com.github.hpchugo.ecommerce;
 
+import com.github.hpchugo.ecommerce.consumer.KafkaService;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 import java.util.HashMap;

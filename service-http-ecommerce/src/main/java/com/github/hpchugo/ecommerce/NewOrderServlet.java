@@ -1,5 +1,6 @@
 package com.github.hpchugo.ecommerce;
 
+import com.github.hpchugo.ecommerce.dispatcher.KafkaDispatcher;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import javax.servlet.ServletConfig;

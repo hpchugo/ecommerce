@@ -1,5 +1,7 @@
 package com.github.hpchugo.ecommerce;
 
+import com.github.hpchugo.ecommerce.consumer.KafkaService;
+import com.github.hpchugo.ecommerce.dispatcher.KafkaDispatcher;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 import java.math.BigDecimal;

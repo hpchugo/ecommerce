@@ -1,5 +1,6 @@
 package com.github.hpchugo.ecommerce;
 
+import com.github.hpchugo.ecommerce.dispatcher.KafkaDispatcher;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.math.BigDecimal;
@@ -16,11 +17,14 @@ public class NewOrderMain {
                 try (var emailDispatcher = new KafkaDispatcher<Email>()) {
                     String orderID = UUID.randomUUID().toString();
                     BigDecimal amount = new BigDecimal(Math.random() * 5000 + 1);
+
+                    var id = new CorrelationId(NewOrderMain.class.getSimpleName());
                     Order order = new Order(orderID, amount, email);
-                    orderDispatcher.send("ECOMMERCE_NEW_ORDER", email, new CorrelationId(NewOrderMain.class.getSimpleName()), order);
+
+                    orderDispatcher.send("ECOMMERCE_NEW_ORDER", email, id, order);
 
                     Email emailCode = new Email("New Order!", "Thank you for your purchase! We're processing your Order");
-                    emailDispatcher.send("ECOMMERCE_SEND_EMAIL", email, new CorrelationId(NewOrderMain.class.getSimpleName()), emailCode);
+                    emailDispatcher.send("ECOMMERCE_SEND_EMAIL", email, id, emailCode);
                 }
             }
         }

@@ -1,5 +1,7 @@
-package com.github.hpchugo.ecommerce;
+package com.github.hpchugo.ecommerce.dispatcher;
 
+import com.github.hpchugo.ecommerce.CorrelationId;
+import com.github.hpchugo.ecommerce.Message;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -15,7 +17,7 @@ public class KafkaDispatcher<T> implements Closeable {
     private final KafkaProducer<String, Message<T>> producer;
 
     public KafkaDispatcher(){
-        this.producer = new KafkaProducer(properties());
+        this.producer = new KafkaProducer<>(properties());
     }
 
     private static Properties properties() {
@@ -33,8 +35,8 @@ public class KafkaDispatcher<T> implements Closeable {
     }
 
     public Future sendAsync(String topic, String key, CorrelationId id, T payload) {
-        var value = new Message(id, payload);
-        var record = new ProducerRecord(topic, key, value);
+        var value = new Message<>(id.continueWith(String.format("_%s", topic)), payload);
+        var record = new ProducerRecord<>(topic, key, value);
         Callback callback = (data, ex) -> {
             if (ex != null) {
                 ex.printStackTrace();
@@ -42,8 +44,7 @@ public class KafkaDispatcher<T> implements Closeable {
             }
             System.out.println("Sending: " + data.topic() + ":::partition " + data.partition() + "/ offset " + data.offset() + "/ timestamp " + data.timestamp());
         };
-        var future = producer.send(record, callback);
-        return future;
+        return producer.send(record, callback);
     }
 
     @Override

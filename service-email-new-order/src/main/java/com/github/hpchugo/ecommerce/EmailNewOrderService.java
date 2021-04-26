@@ -1,48 +1,40 @@
 package com.github.hpchugo.ecommerce;
 
-import com.github.hpchugo.ecommerce.consumer.KafkaService;
+import com.github.hpchugo.ecommerce.consumer.ConsumerService;
+import com.github.hpchugo.ecommerce.consumer.ServiceRunner;
 import com.github.hpchugo.ecommerce.dispatcher.KafkaDispatcher;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
-import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
 
-public class EmailNewOrderService {
+public class EmailNewOrderService implements ConsumerService<Order> {
 
     private final KafkaDispatcher<Email> emailDispatcher = new KafkaDispatcher<>();
 
-    public static void main(String[] args) throws ExecutionException, InterruptedException {
-        var emailService = new EmailNewOrderService();
-        try(var service = new KafkaService<>(
-                EmailNewOrderService.class.getSimpleName(),
-                "ECOMMERCE_NEW_ORDER",
-                emailService::parse,
-                new HashMap<>())){
-            service.run();
-        }
+    public static void main(String[] args) {
+       new ServiceRunner<>(EmailNewOrderService::new).start(1);
     }
 
-    private void parse(ConsumerRecord<String, Message<Order>> record) throws ExecutionException, InterruptedException {
-        var message = record.value();
+    public void parse(ConsumerRecord<String, Message<Order>> record) {
         System.out.println("------------------------------------------------------------------------");
         System.out.println("Processing new order, preparing e-mail");
-
         var order = record.value().getPayload();
         var email = order.getEmail();
         var id = record.value().getId().continueWith(EmailNewOrderService.class.getSimpleName());
         Email emailCode = new Email("New Order!", "Thank you for your purchase! We're processing your Order");
-        emailDispatcher.send(
-                "ECOMMERCE_SEND_EMAIL",
-                email,
-                id,
-                emailCode);
+        try {
+            emailDispatcher.send("ECOMMERCE_SEND_EMAIL", email, id, emailCode);
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
-    private final KafkaDispatcher<Order> orderDispatcher = new KafkaDispatcher<>();
+    public String getTopic() {
+        return "ECOMMERCE_NEW_ORDER";
+    }
 
-    private boolean isFraud(Order order) {
-        return order.getAmount().compareTo(new BigDecimal("4500")) >= 0;
+    public String getConsumerGroup() {
+        return EmailNewOrderService.class.getSimpleName();
     }
 }

@@ -3,55 +3,54 @@ package com.github.hpchugo.ecommerce;
 import com.github.hpchugo.ecommerce.dispatcher.KafkaDispatcher;
 import org.apache.commons.lang3.RandomStringUtils;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 public class NewOrderServlet extends HttpServlet {
 
-    private final KafkaDispatcher<Order> orderDispatcher = new KafkaDispatcher();
+    private final KafkaDispatcher<Order> orderDispatcher = new KafkaDispatcher<>();
 
-    @Override
-    public void init(ServletConfig config) throws ServletException {
-        super.init(config);
-    }
-
-    @Override
     public void destroy() {
         orderDispatcher.close();
     }
 
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp){
         try {
             String orderID = UUID.randomUUID().toString();
-            String email = !req.getParameter("email").equalsIgnoreCase("") ? req.getParameter("email") : generateRandomEmail(20);
-            BigDecimal amount = new BigDecimal(!req.getParameter("amount").equalsIgnoreCase("") ? req.getParameter("amount") : UUID.randomUUID().toString());
-
+            String email = !req.getParameter("email").equalsIgnoreCase("") ? req.getParameter("email") : generateRandomEmail();
+            BigDecimal amount = new BigDecimal(!req.getParameter("amount").equalsIgnoreCase("") ? req.getParameter("amount") : generateRandomBigDecimalFromRange(new BigDecimal(6000)).toString());
+            String orderId = req.getParameter(!req.getParameter("uuid").equalsIgnoreCase("") ? req.getParameter("uuid") : UUID.randomUUID().toString());
             Order order = new Order(orderID, amount, email);
-            orderDispatcher.send("ECOMMERCE_NEW_ORDER", email, new CorrelationId(NewOrderServlet.class.getSimpleName()),order);
-
+            var database = new OrdersDatabase();
             resp.setStatus(HttpServletResponse.SC_OK);
-            resp.getWriter().println("New Order sent successfully");
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
+            if(database.saveNew(order)){
+                orderDispatcher.send("ECOMMERCE_NEW_ORDER", email, new CorrelationId(NewOrderServlet.class.getSimpleName()),order);
+                resp.getWriter().println("New Order sent successfully!");
+            }else{
+                resp.getWriter().println("Old order received!");
+            }
+
+        } catch (IOException | ExecutionException | InterruptedException e) {
             e.printStackTrace();
         }
     }
 
 
-    private static String generateRandomEmail(int length) {
+    private static String generateRandomEmail() {
         String allowedChars = "abcdefghijklmnopqrstuvwxyz" + "1234567890";
-        String email = "";
-        String temp = RandomStringUtils.random(length, allowedChars);
+        String email;
+        String temp = RandomStringUtils.random(20, allowedChars);
         email = temp.substring(0, temp.length() - 9) + "@testdata.com";
         return email;
+    }
+
+    private static BigDecimal generateRandomBigDecimalFromRange(BigDecimal max) {
+        return BigDecimal.ONE.add(BigDecimal.valueOf(Math.random()).multiply(max.subtract(BigDecimal.ONE))).setScale(2, RoundingMode.UP);
     }
 }

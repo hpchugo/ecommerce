@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
 
 public class KafkaService<T> implements Closeable {
     private final KafkaConsumer<String, Message<T>> consumer;
-    private final ConsumerFunction parse;
+    private final ConsumerFunction<T> parse;
 
     public KafkaService(String groupId, String topic, ConsumerFunction<T> parse, Map<String, String> properties) {
         this(parse, groupId, properties);
@@ -36,7 +36,7 @@ public class KafkaService<T> implements Closeable {
     }
 
     public void run() throws ExecutionException, InterruptedException {
-        try(var deadLetter = new KafkaDispatcher<>()) {
+        try (var deadLetter = new KafkaDispatcher<>()) {
             while (true) {
                 var records = consumer.poll(Duration.ofMillis(100));
                 if (!records.isEmpty()) {
@@ -58,7 +58,7 @@ public class KafkaService<T> implements Closeable {
         }
     }
 
-    private Properties getProperties(String groupId, Map<String, String> overriderProperties){
+    private Properties getProperties(String groupId, Map<String, String> overriderProperties) {
         var properties = new Properties();
         properties.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:9092");
         properties.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
@@ -66,12 +66,15 @@ public class KafkaService<T> implements Closeable {
         properties.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         properties.setProperty(ConsumerConfig.CLIENT_ID_CONFIG, UUID.randomUUID().toString());
         properties.setProperty(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "1");
+        properties.setProperty(ConsumerConfig.ISOLATION_LEVEL_CONFIG, "read_committed");
+        properties.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+        properties.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+
         properties.putAll(overriderProperties);
         return properties;
     }
 
-    @Override
-    public void close(){
+    public void close() {
         consumer.close();
     }
 }

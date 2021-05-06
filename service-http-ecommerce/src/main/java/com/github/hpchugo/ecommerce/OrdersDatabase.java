@@ -23,14 +23,23 @@ public class OrdersDatabase implements Closeable {
     }
 
     private boolean wasProcessed(Order order) {
-        try(var result = database.query("select uuid from Orders where uuid = ? limit 1", order.getOrderId())) {
+        try(var result = database.query("select uuid from Orders where uuid = ? limit 3", order.getOrderId())) {
             return result.next();
         } catch (SQLException e) {
             return false;
         }
     }
-
     public void close()  {
+        database.close();
+    }
+    public void close1()  {
+        database.close();
+    }
+
+    public void close2()  {
+        database.close();
+    }
+    public void close3()  {
         database.close();
     }
 }
